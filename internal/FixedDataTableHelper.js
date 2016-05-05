@@ -12,16 +12,16 @@
 
 'use strict';
 
-var Locale = require('Locale');
-var React = require('React');
-var FixedDataTableColumnGroup = require('FixedDataTableColumnGroupNew.react');
-var FixedDataTableColumn = require('FixedDataTableColumnNew.react');
+var Locale = require('./Locale');
+var React = require('./React');
+var FixedDataTableColumnGroup = require('./FixedDataTableColumnGroup.react');
+var FixedDataTableColumn = require('./FixedDataTableColumn.react');
 
-var DIR_SIGN = (Locale.isRTL() ? -1 : +1);
+var DIR_SIGN = Locale.isRTL() ? -1 : +1;
 // A cell up to 5px outside of the visible area will still be considered visible
 var CELL_VISIBILITY_TOLERANCE = 5; // used for flyouts
 
-function renderToString(value) /*string*/ {
+function renderToString(value) /*string*/{
   if (value === null || value === undefined) {
     return '';
   } else {
@@ -38,7 +38,7 @@ function renderToString(value) /*string*/ {
  *    Function to excecute for each column. It is passed the column.
  */
 function forEachColumn(children, callback) {
-  React.Children.forEach(children, (child) => {
+  React.Children.forEach(children, function (child) {
     if (child.type === FixedDataTableColumnGroup) {
       forEachColumn(child.props.children, callback);
     } else if (child.type === FixedDataTableColumn) {
@@ -58,7 +58,7 @@ function forEachColumn(children, callback) {
  */
 function mapColumns(children, callback) {
   var newChildren = [];
-  React.Children.forEach(children, originalChild => {
+  React.Children.forEach(children, function (originalChild) {
     var newChild = originalChild;
 
     // The child is either a column group or a column. If it is a column group
@@ -68,7 +68,7 @@ function mapColumns(children, callback) {
       var haveColumnsChanged = false;
       var newColumns = [];
 
-      forEachColumn(originalChild.props.children, originalcolumn => {
+      forEachColumn(originalChild.props.children, function (originalcolumn) {
         var newColumn = callback(originalcolumn);
         if (newColumn !== originalcolumn) {
           haveColumnsChanged = true;
@@ -80,7 +80,7 @@ function mapColumns(children, callback) {
       // new children
       if (haveColumnsChanged) {
         newChild = React.cloneElement(originalChild, {
-          children: newColumns,
+          children: newColumns
         });
       }
     } else if (originalChild.type === FixedDataTableColumn) {
@@ -94,11 +94,11 @@ function mapColumns(children, callback) {
 }
 
 var FixedDataTableHelper = {
-  DIR_SIGN,
-  CELL_VISIBILITY_TOLERANCE,
-  renderToString,
-  forEachColumn,
-  mapColumns,
+  DIR_SIGN: DIR_SIGN,
+  CELL_VISIBILITY_TOLERANCE: CELL_VISIBILITY_TOLERANCE,
+  renderToString: renderToString,
+  forEachColumn: forEachColumn,
+  mapColumns: mapColumns
 };
 
 module.exports = FixedDataTableHelper;

@@ -18,12 +18,6 @@ exports.DocsPages = {
     COLUMN_API: {location: 'api-column.html', title: 'Column'},
     COLUMNGROUP_API: {location: 'api-columngroup.html', title: 'Column Group'},
     CELL_API: {location: 'api-cell.html', title: 'Cell'},
-  },
-  API_V5: {
-    groupTitle: 'API - v0.5',
-    TABLE_API: {location: 'api-table-v0.5.html', title: 'Table'},
-    COLUMN_API: {location: 'api-column-v0.5.html', title: 'Column'},
-    COLUMNGROUP_API: {location: 'api-columngroup-v0.5.html', title: 'Column Group'},
   }
 };
 

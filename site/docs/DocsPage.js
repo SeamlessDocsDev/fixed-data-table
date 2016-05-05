@@ -20,10 +20,6 @@ var DOCS_MARKDOWN_FILES = {
   [DocsPages.API.COLUMNGROUP_API.location]: require('../../docs/api/ColumnGroupAPI.md'),
   [DocsPages.API.CELL_API.location]: require('../../docs/api/CellAPI.md'),
 
-  // API - v0.5
-  [DocsPages.API_V5.TABLE_API.location]: require('../../docs/api-v0.5/TableAPI.md'),
-  [DocsPages.API_V5.COLUMN_API.location]: require('../../docs/api-v0.5/ColumnAPI.md'),
-  [DocsPages.API_V5.COLUMNGROUP_API.location]: require('../../docs/api-v0.5/ColumnGroupAPI.md'),
 };
 
 var DocsPage = React.createClass({

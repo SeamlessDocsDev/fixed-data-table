@@ -1,5 +1,8 @@
 Fixed Data Tables for React
 ====================================
+This is a fork repo for Seamlessdocs.
+
+====================================
 
 FixedDataTable is a React component for building and presenting data in a flexible, powerful way. It supports standard table features, like headers, columns, rows, header groupings, and both fixed-position and scrolling columns.
 
@@ -20,16 +23,6 @@ Things the FixedDataTable **doesn't** do:
 * FixedDataTable does not provide a layout reflow mechanism or calculate content layout information such as width and height of the cell contents. The developer has to provide the layout information to the table instead.
 * FixedDataTable does not handle sorting of data. Instead it allows the developer to supply data getters that can be sort-, filter-, or tail-loading-aware.
 * FixedDataTable does not fetch the data (see above)
-
-Getting started
----------------
-
-Install `fixed-data-table` using npm.
-
-```shell
-npm install fixed-data-table
-```
-Add the default stylesheet `dist/fixed-data-table.css`, then import it into any module.
 
 ### Basic Example
 
@@ -82,14 +75,6 @@ Contributions
 ------------
 
 Use [GitHub issues](https://github.com/facebook/fixed-data-table/issues) for requests.
-
-We actively welcome pull requests; learn how to [contribute](https://github.com/facebook/fixed-data-table/blob/master/CONTRIBUTING.md).
-
-
-Changelog
----------
-
-Changes are tracked as [GitHub releases](https://github.com/facebook/fixed-data-table/releases).
 
 
 License
