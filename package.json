@@ -33,7 +33,7 @@
     "webpack-dev-server": "^1.8.0"
   },
   "scripts": {
-    "build": "npm run build-npm",
+    "build": "npm run build-dist; npm run build-npm",
     "site-dev-server": "./build_helpers/startSiteDevServer.sh",
     "site-build": "./build_helpers/buildStaticSite.sh",
     "build-dist": "./build_helpers/buildDist.sh",
