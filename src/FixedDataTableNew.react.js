@@ -189,7 +189,12 @@ var FixedDataTable = React.createClass({
     scrollToRow: PropTypes.number,
 
     /**
-     * Callback that is called when scrolling in up-down direction.
+     * Callback that is called when scrolling in X direction.
+     */
+    onScrollX: PropTypes.func,
+
+    /**
+     * Callback that is called when scrolling in Y direction.
      */
     onScrollY: PropTypes.func,
 
@@ -392,8 +397,19 @@ var FixedDataTable = React.createClass({
     this.setState(this._calculateState(nextProps, this.state));
   },
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     this._reportContentHeight();
+    var scrollX = this.state.scrollX;
+    var scrollY = this.state.scrollY;
+    if (prevState.scrollX && scrollX != prevState.scrollX) {
+      if (this.props.onScrollX)
+        this.props.onScrollX(this.state);
+    };
+
+    if (prevState.scrollY && scrollY != prevState.scrollY) {
+      if (this.props.onScrollY)
+        this.props.onScrollY(this.state);
+    };
   },
 
   render() /*object*/ {
@@ -984,16 +1000,13 @@ var FixedDataTable = React.createClass({
           0,
           scrollState.contentHeight - this.state.bodyHeight
         );
-        var newState = {
+        this.setState({
           firstRowIndex: scrollState.index,
           firstRowOffset: scrollState.offset,
           scrollY: scrollState.position,
           scrollContentHeight: scrollState.contentHeight,
           maxScrollY: maxScrollY,
-        };
-        if (this.props.onScrollY)
-          this.props.onScrollY(newState);
-        this.setState(newState);
+        });
       } else if (deltaX && this.props.overflowX !== 'hidden') {
         x += deltaX;
         x = x < 0 ? 0 : x;

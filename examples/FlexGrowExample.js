@@ -56,6 +56,7 @@ class FlexGrowExample extends React.Component {
         rowHeight={50}
         headerHeight={50}
         rowsCount={dataList.getSize()}
+        onScrollX={(s)=>console.log(s)}
         onScrollY={(s)=>console.log(s)}
         width={1000}
         height={500}

@@ -391,7 +391,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    scrollToRow: PropTypes.number,
 
 	    /**
-	     * Callback that is called when scrolling in up-down direction.
+	     * Callback that is called when scrolling in X direction.
+	     */
+	    onScrollX: PropTypes.func,
+
+	    /**
+	     * Callback that is called when scrolling in Y direction.
 	     */
 	    onScrollY: PropTypes.func,
 
@@ -570,8 +575,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.setState(this._calculateState(nextProps, this.state));
 	  },
 
-	  componentDidUpdate: function componentDidUpdate() {
+	  componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
 	    this._reportContentHeight();
+	    var scrollX = this.state.scrollX;
+	    var scrollY = this.state.scrollY;
+	    if (prevState.scrollX && scrollX != prevState.scrollX) {
+	      if (this.props.onScrollX) this.props.onScrollX(this.state);
+	    };
+
+	    if (prevState.scrollY && scrollY != prevState.scrollY) {
+	      if (this.props.onScrollY) this.props.onScrollY(this.state);
+	    };
 	  },
 
 	  render: function render() /*object*/{
@@ -1053,15 +1067,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (Math.abs(deltaY) > Math.abs(deltaX) && this.props.overflowY !== 'hidden') {
 	        var scrollState = this._scrollHelper.scrollBy(Math.round(deltaY));
 	        var maxScrollY = Math.max(0, scrollState.contentHeight - this.state.bodyHeight);
-	        var newState = {
+	        this.setState({
 	          firstRowIndex: scrollState.index,
 	          firstRowOffset: scrollState.offset,
 	          scrollY: scrollState.position,
 	          scrollContentHeight: scrollState.contentHeight,
 	          maxScrollY: maxScrollY
-	        };
-	        if (this.props.onScrollY) this.props.onScrollY(newState);
-	        this.setState(newState);
+	        });
 	      } else if (deltaX && this.props.overflowX !== 'hidden') {
 	        x += deltaX;
 	        x = x < 0 ? 0 : x;
