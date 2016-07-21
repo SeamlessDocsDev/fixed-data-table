@@ -16,6 +16,7 @@
 var React = require('React');
 var ReactComponentWithPureRenderMixin = require('ReactComponentWithPureRenderMixin');
 var ReactWheelHandler = require('ReactWheelHandler');
+var ReactTouchHandler = require('ReactTouchHandler');
 var Scrollbar = require('Scrollbar.react');
 var FixedDataTableBufferedRows = require('FixedDataTableBufferedRows.react');
 var FixedDataTableColumnResizeHandle = require('FixedDataTableColumnResizeHandle.react');
@@ -129,6 +130,12 @@ var FixedDataTable = React.createClass({
 
     overflowX: PropTypes.oneOf(['hidden', 'auto']),
     overflowY: PropTypes.oneOf(['hidden', 'auto']),
+
+    /**
+     * Boolean flag indicating of touch scrolling should be enabled
+     * This feature is current in beta and may have bugs
+     */
+    touchScrollEnabled: PropTypes.bool,
 
     /**
      * Number of rows in the table.
@@ -270,6 +277,7 @@ var FixedDataTable = React.createClass({
       headerHeight: 0,
       scrollLeft: 0,
       scrollTop: 0,
+      touchScrollEnabled: false
     };
   },
 
@@ -303,10 +311,18 @@ var FixedDataTable = React.createClass({
     if (scrollToColumn !== undefined && scrollToColumn !== null) {
       this._columnToScrollTo = scrollToColumn;
     }
+
+    var touchEnabled = this.state.touchScrollEnabled === true;
+
     this._wheelHandler = new ReactWheelHandler(
-      this._onWheel,
+      this._onScroll,
       this._shouldHandleWheelX,
       this._shouldHandleWheelY
+    );
+    this._touchHandler = new ReactTouchHandler(
+      this._onScroll,
+      touchEnabled && this._shouldHandleWheelX,
+      touchEnabled && this._shouldHandleWheelY
     );
   },
 
@@ -378,12 +394,19 @@ var FixedDataTable = React.createClass({
 
     var newOverflowX = nextProps.overflowX;
     var newOverflowY = nextProps.overflowY;
+    var touchEnabled = nextProps.touchScrollEnabled === true;
+
     if (newOverflowX !== this.props.overflowX ||
         newOverflowY !== this.props.overflowY) {
       this._wheelHandler = new ReactWheelHandler(
-        this._onWheel,
+        this._onScroll,
         newOverflowX !== 'hidden', // Should handle horizontal scroll
         newOverflowY !== 'hidden' // Should handle vertical scroll
+      );
+      this._touchHandler = new ReactTouchHandler(
+        this._onScroll,
+        newOverflowX !== 'hidden' && touchEnabled, // Should handle horizontal scroll
+        newOverflowY !== 'hidden' && touchEnabled // Should handle vertical scroll
       );
     }
 
@@ -583,6 +606,10 @@ var FixedDataTable = React.createClass({
           cx('public/fixedDataTable/main'),
         )}
         onWheel={this._wheelHandler.onWheel}
+        onTouchStart={this._touchHandler.onTouchStart}
+        onTouchEnd={this._touchHandler.onTouchEnd}
+        onTouchMove={this._touchHandler.onTouchMove}
+        onTouchCancel={this._touchHandler.onTouchCancel}
         style={{height: state.height, width: state.width}}>
         <div
           className={cx('fixedDataTableLayout/rowsContainer')}
@@ -987,7 +1014,7 @@ var FixedDataTable = React.createClass({
     };
   },
 
-  _onWheel(/*number*/ deltaX, /*number*/ deltaY) {
+  _onScroll(/*number*/ deltaX, /*number*/ deltaY) {
     if (this.isMounted()) {
       if (!this._isScrolling) {
         this._didScrollStart();

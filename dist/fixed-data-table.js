@@ -18,7 +18,7 @@
 		exports["FixedDataTable"] = factory(require("react"), require("react-dom"));
 	else
 		root["FixedDataTable"] = factory(root["React"], root["ReactDOM"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_28__, __WEBPACK_EXTERNAL_MODULE_44__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_28__, __WEBPACK_EXTERNAL_MODULE_45__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -176,9 +176,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	var FixedDataTable = __webpack_require__(26);
-	var FixedDataTableCellDefault = __webpack_require__(64);
-	var FixedDataTableColumn = __webpack_require__(62);
-	var FixedDataTableColumnGroup = __webpack_require__(61);
+	var FixedDataTableCellDefault = __webpack_require__(65);
+	var FixedDataTableColumn = __webpack_require__(63);
+	var FixedDataTableColumnGroup = __webpack_require__(62);
 
 	var FixedDataTableRoot = {
 	  Cell: FixedDataTableCellDefault,
@@ -216,20 +216,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	var React = __webpack_require__(27);
 	var ReactComponentWithPureRenderMixin = __webpack_require__(29);
 	var ReactWheelHandler = __webpack_require__(30);
-	var Scrollbar = __webpack_require__(38);
-	var FixedDataTableBufferedRows = __webpack_require__(52);
-	var FixedDataTableColumnResizeHandle = __webpack_require__(66);
-	var FixedDataTableRow = __webpack_require__(57);
-	var FixedDataTableScrollHelper = __webpack_require__(67);
-	var FixedDataTableWidthHelper = __webpack_require__(69);
+	var ReactTouchHandler = __webpack_require__(38);
+	var Scrollbar = __webpack_require__(39);
+	var FixedDataTableBufferedRows = __webpack_require__(53);
+	var FixedDataTableColumnResizeHandle = __webpack_require__(67);
+	var FixedDataTableRow = __webpack_require__(58);
+	var FixedDataTableScrollHelper = __webpack_require__(68);
+	var FixedDataTableWidthHelper = __webpack_require__(70);
 
-	var cx = __webpack_require__(46);
-	var debounceCore = __webpack_require__(70);
+	var cx = __webpack_require__(47);
+	var debounceCore = __webpack_require__(71);
 	var emptyFunction = __webpack_require__(31);
-	var invariant = __webpack_require__(51);
-	var joinClasses = __webpack_require__(65);
-	var shallowEqual = __webpack_require__(71);
-	var translateDOMPositionXY = __webpack_require__(47);
+	var invariant = __webpack_require__(52);
+	var joinClasses = __webpack_require__(66);
+	var shallowEqual = __webpack_require__(72);
+	var translateDOMPositionXY = __webpack_require__(48);
 
 	var PropTypes = React.PropTypes;
 
@@ -331,6 +332,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    overflowX: PropTypes.oneOf(['hidden', 'auto']),
 	    overflowY: PropTypes.oneOf(['hidden', 'auto']),
+
+	    /**
+	     * Boolean flag indicating of touch scrolling should be enabled
+	     * This feature is current in beta and may have bugs
+	     */
+	    touchScrollEnabled: PropTypes.bool,
 
 	    /**
 	     * Number of rows in the table.
@@ -471,7 +478,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      groupHeaderHeight: 0,
 	      headerHeight: 0,
 	      scrollLeft: 0,
-	      scrollTop: 0
+	      scrollTop: 0,
+	      touchScrollEnabled: false
 	    };
 	  },
 
@@ -496,7 +504,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (scrollToColumn !== undefined && scrollToColumn !== null) {
 	      this._columnToScrollTo = scrollToColumn;
 	    }
-	    this._wheelHandler = new ReactWheelHandler(this._onWheel, this._shouldHandleWheelX, this._shouldHandleWheelY);
+
+	    var touchEnabled = this.state.touchScrollEnabled === true;
+
+	    this._wheelHandler = new ReactWheelHandler(this._onScroll, this._shouldHandleWheelX, this._shouldHandleWheelY);
+	    this._touchHandler = new ReactTouchHandler(this._onScroll, touchEnabled && this._shouldHandleWheelX, touchEnabled && this._shouldHandleWheelY);
 	  },
 
 	  _shouldHandleWheelX: function _shouldHandleWheelX( /*number*/delta) /*boolean*/{
@@ -560,9 +572,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var newOverflowX = nextProps.overflowX;
 	    var newOverflowY = nextProps.overflowY;
+	    var touchEnabled = nextProps.touchScrollEnabled === true;
+
 	    if (newOverflowX !== this.props.overflowX || newOverflowY !== this.props.overflowY) {
-	      this._wheelHandler = new ReactWheelHandler(this._onWheel, newOverflowX !== 'hidden', // Should handle horizontal scroll
+	      this._wheelHandler = new ReactWheelHandler(this._onScroll, newOverflowX !== 'hidden', // Should handle horizontal scroll
 	      newOverflowY !== 'hidden' // Should handle vertical scroll
+	      );
+	      this._touchHandler = new ReactTouchHandler(this._onScroll, newOverflowX !== 'hidden' && touchEnabled, // Should handle horizontal scroll
+	      newOverflowY !== 'hidden' && touchEnabled // Should handle vertical scroll
 	      );
 	    }
 
@@ -722,6 +739,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      {
 	        className: joinClasses(cx('fixedDataTableLayout/main'), cx('public/fixedDataTable/main')),
 	        onWheel: this._wheelHandler.onWheel,
+	        onTouchStart: this._touchHandler.onTouchStart,
+	        onTouchEnd: this._touchHandler.onTouchEnd,
+	        onTouchMove: this._touchHandler.onTouchMove,
+	        onTouchCancel: this._touchHandler.onTouchCancel,
 	        style: { height: state.height, width: state.width } },
 	      React.createElement(
 	        'div',
@@ -1058,7 +1079,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  },
 
-	  _onWheel: function _onWheel( /*number*/deltaX, /*number*/deltaY) {
+	  _onScroll: function _onScroll( /*number*/deltaX, /*number*/deltaY) {
 	    if (this.isMounted()) {
 	      if (!this._isScrolling) {
 	        this._didScrollStart();
@@ -2096,6 +2117,318 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
+	 *
+	 * This was copy/pasted from github.com/schrodinger/fixed-data-table-2. It is not a part of github.com/facebook/fixed-data-table.
+	 *
+	 * Copyright Schrodinger, LLC
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * This is utility that handles touch events and calls provided touch
+	 * callback with correct frame rate.
+	 * Deceleration logic based on http://ariya.ofilabs.com/2013/11/javascript-kinetic-scrolling-part-2.html
+	 *
+	 * @providesModule ReactTouchHandler
+	 * @typechecks
+	 */
+
+	'use strict';
+
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	var _emptyFunction = __webpack_require__(31);
+
+	var _emptyFunction2 = _interopRequireDefault(_emptyFunction);
+
+	var _requestAnimationFramePolyfill = __webpack_require__(36);
+
+	var _requestAnimationFramePolyfill2 = _interopRequireDefault(_requestAnimationFramePolyfill);
+
+	var MOVE_AMPLITUDE = 1.6;
+	var DECELERATION_AMPLITUDE = 1.6;
+	var DECELERATION_FACTOR = 325;
+	var TRACKER_TIMEOUT = 100;
+
+	var ReactTouchHandler = (function () {
+	  /**
+	   * onTouchScroll is the callback that will be called with right frame rate if
+	   * any touch events happened
+	   * onTouchScroll should is to be called with two arguments: deltaX and deltaY in
+	   * this order
+	   */
+
+	  function ReactTouchHandler(
+	  /*function*/onTouchScroll,
+	  /*boolean|function*/handleScrollX,
+	  /*boolean|function*/handleScrollY,
+	  /*?boolean|?function*/stopPropagation) {
+	    _classCallCheck(this, ReactTouchHandler);
+
+	    // The animation frame id for the drag scroll
+	    this._dragAnimationId = null;
+
+	    // The interval id for tracking the drag velocity
+	    this._trackerId = null;
+
+	    // Used to track the drag scroll delta while waiting for an animation frame
+	    this._deltaX = 0;
+	    this._deltaY = 0;
+
+	    // The last touch we processed while dragging.  Used to compute the delta and velocity above
+	    this._lastTouchX = 0;
+	    this._lastTouchY = 0;
+
+	    // Used to track a moving average of the scroll velocity while dragging
+	    this._velocityX = 0;
+	    this._velocityY = 0;
+
+	    // An accummulated drag scroll delta used to calculate velocity
+	    this._accumulatedDeltaX = 0;
+	    this._accumulatedDeltaY = 0;
+
+	    // Timestamp from the last interval frame we used to track velocity
+	    this._lastFrameTimestamp = Date.now();
+
+	    // Timestamp from the last animation frame we used to autoscroll after drag stop
+	    this._autoScrollTimestamp = Date.now();
+
+	    if (typeof handleScrollX !== 'function') {
+	      handleScrollX = handleScrollX ? _emptyFunction2['default'].thatReturnsTrue : _emptyFunction2['default'].thatReturnsFalse;
+	    }
+
+	    if (typeof handleScrollY !== 'function') {
+	      handleScrollY = handleScrollY ? _emptyFunction2['default'].thatReturnsTrue : _emptyFunction2['default'].thatReturnsFalse;
+	    }
+
+	    // TODO (jordan) Is configuring this necessary
+	    if (typeof stopPropagation !== 'function') {
+	      stopPropagation = stopPropagation ? _emptyFunction2['default'].thatReturnsTrue : _emptyFunction2['default'].thatReturnsFalse;
+	    }
+
+	    this._handleScrollX = handleScrollX;
+	    this._handleScrollY = handleScrollY;
+	    this._stopPropagation = stopPropagation;
+	    this._onTouchScrollCallback = onTouchScroll;
+
+	    this._didTouchMove = this._didTouchMove.bind(this);
+	    this._track = this._track.bind(this);
+	    this._autoScroll = this._autoScroll.bind(this);
+	    this._startAutoScroll = this._startAutoScroll.bind(this);
+	    this.onTouchStart = this.onTouchStart.bind(this);
+	    this.onTouchEnd = this.onTouchEnd.bind(this);
+	    this.onTouchMove = this.onTouchMove.bind(this);
+	    this.onTouchCancel = this.onTouchCancel.bind(this);
+	  }
+
+	  _createClass(ReactTouchHandler, [{
+	    key: 'onTouchStart',
+	    value: function onTouchStart( /*object*/event) {
+	      // Start tracking drag delta for scrolling
+	      this._lastTouchX = event.touches[0].pageX;
+	      this._lastTouchY = event.touches[0].pageY;
+
+	      // Reset our velocity and intermediate data used to compute velocity
+	      this._velocityX = 0;
+	      this._velocityY = 0;
+	      this._accumulatedDeltaX = 0;
+	      this._accumulatedDeltaY = 0;
+	      this._lastFrameTimestamp = Date.now();
+
+	      // Setup interval for tracking velocity
+	      clearInterval(this._trackerId);
+	      this._trackerId = setInterval(this._track, TRACKER_TIMEOUT);
+
+	      if (this._stopPropagation()) {
+	        event.stopPropagation();
+	      }
+	    }
+	  }, {
+	    key: 'onTouchEnd',
+	    value: function onTouchEnd( /*object*/event) {
+
+	      // Stop tracking velocity
+	      clearInterval(this._trackerId);
+	      this._trackerId = null;
+
+	      // Initialize decelerating autoscroll on drag stop
+	      requestAnimationFrame(this._startAutoScroll);
+
+	      if (this._stopPropagation()) {
+	        event.stopPropagation();
+	      }
+	    }
+	  }, {
+	    key: 'onTouchCancel',
+	    value: function onTouchCancel( /*object*/event) {
+
+	      // Stop tracking velocity
+	      clearInterval(this._trackerId);
+	      this._trackerId = null;
+
+	      if (this._stopPropagation()) {
+	        event.stopPropagation();
+	      }
+	    }
+	  }, {
+	    key: 'onTouchMove',
+	    value: function onTouchMove( /*object*/event) {
+	      var moveX = event.touches[0].pageX;
+	      var moveY = event.touches[0].pageY;
+
+	      // Compute delta scrolled since last drag
+	      // Mobile, scrolling is inverted
+	      this._deltaX = MOVE_AMPLITUDE * (this._lastTouchX - moveX);
+	      this._deltaY = MOVE_AMPLITUDE * (this._lastTouchY - moveY);
+
+	      var handleScrollX = this._handleScrollX(this._deltaX, this._deltaY);
+	      var handleScrollY = this._handleScrollY(this._deltaY, this._deltaX);
+	      if (!handleScrollX && !handleScrollY) {
+	        return;
+	      }
+
+	      // If we can handle scroll update last touch for computing delta
+	      if (handleScrollX) {
+	        this._lastTouchX = moveX;
+	      } else {
+	        this._deltaX = 0;
+	      }
+	      if (handleScrollY) {
+	        this._lastTouchY = moveY;
+	      } else {
+	        this._deltaY = 0;
+	      }
+
+	      event.preventDefault();
+
+	      // Ensure minimum delta magnitude is met to avoid jitter
+	      var changed = false;
+	      if (Math.abs(this._deltaX) > 2 || Math.abs(this._deltaY) > 2) {
+	        if (this._stopPropagation()) {
+	          event.stopPropagation();
+	        }
+	        changed = true;
+	      }
+
+	      // Request animation frame to trigger scroll of computed delta
+	      if (changed === true && this._dragAnimationId === null) {
+	        this._dragAnimationId = (0, _requestAnimationFramePolyfill2['default'])(this._didTouchMove);
+	      }
+	    }
+
+	    /**
+	     * Fire scroll callback based on computed drag delta.
+	     * Also track accummulated delta so we can calculate velocity
+	     */
+	  }, {
+	    key: '_didTouchMove',
+	    value: function _didTouchMove() {
+	      this._dragAnimationId = null;
+
+	      this._onTouchScrollCallback(this._deltaX, this._deltaY);
+	      this._accumulatedDeltaX += this._deltaX;
+	      this._accumulatedDeltaY += this._deltaY;
+	      this._deltaX = 0;
+	      this._deltaY = 0;
+	    }
+
+	    /**
+	     * Compute velocity based on a weighted average of drag over last 100 ms and
+	     * previous velocity.  Combining into a moving average results in a smoother scroll.
+	     */
+	  }, {
+	    key: '_track',
+	    value: function _track() {
+	      var now = Date.now();
+	      var elapsed = now - this._lastFrameTimestamp;
+	      var oldVelocityX = this._velocityX;
+	      var oldVelocityY = this._velocityY;
+
+	      // We compute velocity using a weighted average of the current velocity and the previous velocity
+	      // If the previous velocity is 0, put the full weight on the last 100 ms
+	      var weight = 0.8;
+	      if (elapsed < TRACKER_TIMEOUT) {
+	        weight *= elapsed / TRACKER_TIMEOUT;
+	      }
+	      if (oldVelocityX === 0 && oldVelocityY === 0) {
+	        weight = 1;
+	      }
+
+	      // Formula for computing weighted average of velocity
+	      this._velocityX = weight * (TRACKER_TIMEOUT * this._accumulatedDeltaX / (1 + elapsed));
+	      if (weight < 1) {
+	        this._velocityX += (1 - weight) * oldVelocityX;
+	      }
+
+	      this._velocityY = weight * (TRACKER_TIMEOUT * this._accumulatedDeltaY / (1 + elapsed));
+	      if (weight < 1) {
+	        this._velocityY += (1 - weight) * oldVelocityY;
+	      }
+
+	      this._accumulatedDeltaX = 0;
+	      this._accumulatedDeltaY = 0;
+	      this._lastFrameTimestamp = now;
+	    }
+
+	    /**
+	     * To kick off deceleration / momentum scrolling,
+	     * handle any scrolling from a drag which was waiting for an animation frame
+	     * Then update our velocity
+	     * Finally start the momentum scrolling handler (autoScroll)
+	     */
+	  }, {
+	    key: '_startAutoScroll',
+	    value: function _startAutoScroll() {
+	      this._autoScrollTimestamp = Date.now();
+	      if (this._deltaX > 0 || this.deltaY > 0) {
+	        this._didTouchMove();
+	      }
+	      this._track();
+	      this._autoScroll();
+	    }
+
+	    /**
+	     * Compute a scroll delta with an exponential decay based on time elapsed since drag was released.
+	     * This is called recursively on animation frames until the delta is below a threshold (5 pixels)
+	     */
+	  }, {
+	    key: '_autoScroll',
+	    value: function _autoScroll() {
+	      var elapsed = Date.now() - this._autoScrollTimestamp;
+	      var factor = DECELERATION_AMPLITUDE * Math.exp(-elapsed / DECELERATION_FACTOR);
+	      var deltaX = factor * this._velocityX;
+	      var deltaY = factor * this._velocityY;
+
+	      if (Math.abs(deltaX) <= 5 || !this._handleScrollX(deltaX, deltaY)) {
+	        deltaX = 0;
+	      }
+	      if (Math.abs(deltaY) <= 5 || !this._handleScrollY(deltaY, deltaX)) {
+	        deltaY = 0;
+	      }
+
+	      if (deltaX !== 0 || deltaY !== 0) {
+	        this._onTouchScrollCallback(deltaX, deltaY);
+	        requestAnimationFrame(this._autoScroll);
+	      }
+	    }
+	  }]);
+
+	  return ReactTouchHandler;
+	})();
+
+	module.exports = ReactTouchHandler;
+
+/***/ },
+/* 39 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -2109,17 +2442,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(39);
-	var Keys = __webpack_require__(42);
+	var DOMMouseMoveTracker = __webpack_require__(40);
+	var Keys = __webpack_require__(43);
 	var React = __webpack_require__(27);
-	var ReactDOM = __webpack_require__(43);
+	var ReactDOM = __webpack_require__(44);
 	var ReactComponentWithPureRenderMixin = __webpack_require__(29);
 	var ReactWheelHandler = __webpack_require__(30);
 
-	var cssVar = __webpack_require__(45);
-	var cx = __webpack_require__(46);
+	var cssVar = __webpack_require__(46);
+	var cx = __webpack_require__(47);
 	var emptyFunction = __webpack_require__(31);
-	var translateDOMPositionXY = __webpack_require__(47);
+	var translateDOMPositionXY = __webpack_require__(48);
 
 	var PropTypes = React.PropTypes;
 
@@ -2544,7 +2877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Scrollbar;
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2572,9 +2905,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var EventListener = __webpack_require__(40);
+	var EventListener = __webpack_require__(41);
 
-	var cancelAnimationFramePolyfill = __webpack_require__(41);
+	var cancelAnimationFramePolyfill = __webpack_require__(42);
 	var requestAnimationFramePolyfill = __webpack_require__(36);
 
 	var DOMMouseMoveTracker = (function () {
@@ -2708,7 +3041,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = DOMMouseMoveTracker;
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2790,7 +3123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = EventListener;
 
 /***/ },
-/* 41 */
+/* 42 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -2816,7 +3149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports) {
 
 	/**
@@ -2858,7 +3191,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2874,16 +3207,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	module.exports = __webpack_require__(44);
-
-/***/ },
-/* 44 */
-/***/ function(module, exports) {
-
-	module.exports = __WEBPACK_EXTERNAL_MODULE_44__;
+	module.exports = __webpack_require__(45);
 
 /***/ },
 /* 45 */
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_45__;
+
+/***/ },
+/* 46 */
 /***/ function(module, exports) {
 
 	/**
@@ -2928,7 +3261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = cssVar;
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports) {
 
 	/**
@@ -2987,7 +3320,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = cx;
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3004,9 +3337,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var BrowserSupportCore = __webpack_require__(48);
+	var BrowserSupportCore = __webpack_require__(49);
 
-	var getVendorPrefixedName = __webpack_require__(49);
+	var getVendorPrefixedName = __webpack_require__(50);
 
 	var TRANSFORM = getVendorPrefixedName('transform');
 	var BACKFACE_VISIBILITY = getVendorPrefixedName('backfaceVisibility');
@@ -3041,7 +3374,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 48 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3057,7 +3390,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var getVendorPrefixedName = __webpack_require__(49);
+	var getVendorPrefixedName = __webpack_require__(50);
 
 	var BrowserSupportCore = {
 	  /**
@@ -3092,7 +3425,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = BrowserSupportCore;
 
 /***/ },
-/* 49 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3111,8 +3444,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var ExecutionEnvironment = __webpack_require__(35);
 
-	var camelize = __webpack_require__(50);
-	var invariant = __webpack_require__(51);
+	var camelize = __webpack_require__(51);
+	var invariant = __webpack_require__(52);
 
 	var memoized = {};
 	var prefixes = ['Webkit', 'ms', 'Moz', 'O'];
@@ -3149,7 +3482,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = getVendorPrefixedName;
 
 /***/ },
-/* 50 */
+/* 51 */
 /***/ function(module, exports) {
 
 	/**
@@ -3186,7 +3519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = camelize;
 
 /***/ },
-/* 51 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3240,7 +3573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = invariant;
 
 /***/ },
-/* 52 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3258,13 +3591,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	var React = __webpack_require__(27);
-	var FixedDataTableRowBuffer = __webpack_require__(53);
-	var FixedDataTableRow = __webpack_require__(57);
+	var FixedDataTableRowBuffer = __webpack_require__(54);
+	var FixedDataTableRow = __webpack_require__(58);
 
-	var cx = __webpack_require__(46);
+	var cx = __webpack_require__(47);
 	var emptyFunction = __webpack_require__(31);
-	var joinClasses = __webpack_require__(65);
-	var translateDOMPositionXY = __webpack_require__(47);
+	var joinClasses = __webpack_require__(66);
+	var translateDOMPositionXY = __webpack_require__(48);
 
 	var PropTypes = React.PropTypes;
 
@@ -3400,7 +3733,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableBufferedRows;
 
 /***/ },
-/* 53 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3421,10 +3754,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var IntegerBufferSet = __webpack_require__(54);
+	var IntegerBufferSet = __webpack_require__(55);
 
-	var clamp = __webpack_require__(56);
-	var invariant = __webpack_require__(51);
+	var clamp = __webpack_require__(57);
+	var invariant = __webpack_require__(52);
 	var MIN_BUFFER_ROWS = 3;
 	var MAX_BUFFER_ROWS = 6;
 
@@ -3528,7 +3861,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableRowBuffer;
 
 /***/ },
-/* 54 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3549,9 +3882,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Heap = __webpack_require__(55);
+	var Heap = __webpack_require__(56);
 
-	var invariant = __webpack_require__(51);
+	var invariant = __webpack_require__(52);
 
 	// Data structure that allows to store values and assign positions to them
 	// in a way to minimize changing positions of stored values when new ones are
@@ -3713,7 +4046,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = IntegerBufferSet;
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports) {
 
 	/**
@@ -3897,7 +4230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Heap;
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports) {
 
 	/**
@@ -3934,7 +4267,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = clamp;
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3954,11 +4287,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var React = __webpack_require__(27);
-	var FixedDataTableCellGroup = __webpack_require__(58);
+	var FixedDataTableCellGroup = __webpack_require__(59);
 
-	var cx = __webpack_require__(46);
-	var joinClasses = __webpack_require__(65);
-	var translateDOMPositionXY = __webpack_require__(47);
+	var cx = __webpack_require__(47);
+	var joinClasses = __webpack_require__(66);
+	var translateDOMPositionXY = __webpack_require__(48);
 
 	var PropTypes = React.PropTypes;
 
@@ -4188,7 +4521,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableRow;
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4209,12 +4542,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var FixedDataTableHelper = __webpack_require__(59);
+	var FixedDataTableHelper = __webpack_require__(60);
 	var React = __webpack_require__(27);
-	var FixedDataTableCell = __webpack_require__(63);
+	var FixedDataTableCell = __webpack_require__(64);
 
-	var cx = __webpack_require__(46);
-	var translateDOMPositionXY = __webpack_require__(47);
+	var cx = __webpack_require__(47);
+	var translateDOMPositionXY = __webpack_require__(48);
 
 	var PropTypes = React.PropTypes;
 
@@ -4400,7 +4733,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableCellGroup;
 
 /***/ },
-/* 59 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4417,10 +4750,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var Locale = __webpack_require__(60);
+	var Locale = __webpack_require__(61);
 	var React = __webpack_require__(27);
-	var FixedDataTableColumnGroup = __webpack_require__(61);
-	var FixedDataTableColumn = __webpack_require__(62);
+	var FixedDataTableColumnGroup = __webpack_require__(62);
+	var FixedDataTableColumn = __webpack_require__(63);
 
 	var DIR_SIGN = Locale.isRTL() ? -1 : +1;
 	// A cell up to 5px outside of the visible area will still be considered visible
@@ -4509,7 +4842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableHelper;
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports) {
 
 	/**
@@ -4538,7 +4871,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Locale;
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4620,7 +4953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableColumnGroup;
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4804,7 +5137,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableColumn;
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4823,11 +5156,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var FixedDataTableCellDefault = __webpack_require__(64);
-	var FixedDataTableHelper = __webpack_require__(59);
+	var FixedDataTableCellDefault = __webpack_require__(65);
+	var FixedDataTableHelper = __webpack_require__(60);
 	var React = __webpack_require__(27);
-	var cx = __webpack_require__(46);
-	var joinClasses = __webpack_require__(65);
+	var cx = __webpack_require__(47);
+	var joinClasses = __webpack_require__(66);
 
 	var DIR_SIGN = FixedDataTableHelper.DIR_SIGN;
 
@@ -4979,7 +5312,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableCell;
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5002,8 +5335,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var React = __webpack_require__(27);
 
-	var cx = __webpack_require__(46);
-	var joinClasses = __webpack_require__(65);
+	var cx = __webpack_require__(47);
+	var joinClasses = __webpack_require__(66);
 
 	var PropTypes = React.PropTypes;
 
@@ -5094,7 +5427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableCellDefault;
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports) {
 
 	/**
@@ -5138,7 +5471,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = joinClasses;
 
 /***/ },
-/* 66 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5159,13 +5492,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(39);
-	var Locale = __webpack_require__(60);
+	var DOMMouseMoveTracker = __webpack_require__(40);
+	var Locale = __webpack_require__(61);
 	var React = __webpack_require__(27);
 	var ReactComponentWithPureRenderMixin = __webpack_require__(29);
 
-	var clamp = __webpack_require__(56);
-	var cx = __webpack_require__(46);
+	var clamp = __webpack_require__(57);
+	var cx = __webpack_require__(47);
 
 	var PropTypes = React.PropTypes;
 
@@ -5303,7 +5636,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableColumnResizeHandle;
 
 /***/ },
-/* 67 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5324,8 +5657,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var PrefixIntervalTree = __webpack_require__(68);
-	var clamp = __webpack_require__(56);
+	var PrefixIntervalTree = __webpack_require__(69);
+	var clamp = __webpack_require__(57);
 
 	var BUFFER_ROWS = 5;
 	var NO_ROWS_SCROLL_RESULT = {
@@ -5608,7 +5941,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableScrollHelper;
 
 /***/ },
-/* 68 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -5630,7 +5963,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var invariant = __webpack_require__(51);
+	var invariant = __webpack_require__(52);
 
 	var parent = function parent(node) {
 	  return Math.floor(node / 2);
@@ -5872,7 +6205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 69 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6010,7 +6343,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = FixedDataTableWidthHelper;
 
 /***/ },
-/* 70 */
+/* 71 */
 /***/ function(module, exports) {
 
 	/**
@@ -6082,7 +6415,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = debounce;
 
 /***/ },
-/* 71 */
+/* 72 */
 /***/ function(module, exports) {
 
 	/**

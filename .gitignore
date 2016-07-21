@@ -8,3 +8,4 @@ __site__
 __site_prerender__
 docs/api
 *.swp
+.idea
