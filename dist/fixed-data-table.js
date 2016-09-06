@@ -5396,6 +5396,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey']);
 
+	    console.log('hit');
+	    console.log(this.props);
+
 	    var innerStyle = _extends({
 	      height: height,
 	      width: width
