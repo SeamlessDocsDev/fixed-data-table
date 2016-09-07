@@ -72,6 +72,7 @@ var FixedDataTableCellDefault = React.createClass({
       ...style,
     };
 
+    debugger;
     return (
       <div
         {...rest}
