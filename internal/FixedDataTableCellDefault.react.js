@@ -77,7 +77,7 @@ var FixedDataTableCellDefault = React.createClass({
     var children = _props.children;
     var columnKey = _props.columnKey;
 
-    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey']);
+    var rest = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey']);
 
     console.log('hit');
     console.log(this.props);
@@ -89,7 +89,7 @@ var FixedDataTableCellDefault = React.createClass({
 
     return React.createElement(
       'div',
-      _extends({}, props, {
+      _extends({}, rest, {
         className: joinClasses(cx('fixedDataTableCellLayout/wrap1'), cx('public/fixedDataTableCell/wrap1'), className),
         style: innerStyle }),
       React.createElement(
