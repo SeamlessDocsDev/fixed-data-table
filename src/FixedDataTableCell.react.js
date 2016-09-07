@@ -93,6 +93,8 @@ var FixedDataTableCell = React.createClass({
 
     var {height, width, columnKey, ...props} = this.props;
 
+    console.log(props);
+
     var style = {
       height,
       width,
