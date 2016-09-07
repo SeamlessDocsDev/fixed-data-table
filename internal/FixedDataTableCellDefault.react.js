@@ -84,7 +84,6 @@ var FixedDataTableCellDefault = React.createClass({
       width: width
     }, style);
 
-    debugger;
     return React.createElement(
       'div',
       _extends({}, rest, {
