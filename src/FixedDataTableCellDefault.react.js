@@ -64,10 +64,7 @@ var FixedDataTableCellDefault = React.createClass({
   },
 
   render() {
-    var {height, width, style, className, children, columnKey, ...rest} = this.props;
-
-    console.log('rest FixedDataTableCellDefault');
-    console.log(this.props);
+    var {height, width, style, className, children, columnKey, ...props} = this.props;
 
     var innerStyle = {
       height,
@@ -77,7 +74,7 @@ var FixedDataTableCellDefault = React.createClass({
 
     return (
       <div
-        {...rest}
+        {...props}
         className={joinClasses(
           cx('fixedDataTableCellLayout/wrap1'),
           cx('public/fixedDataTableCell/wrap1'),
