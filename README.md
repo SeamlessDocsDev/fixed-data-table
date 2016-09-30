@@ -2,6 +2,15 @@ Fixed Data Tables for React
 ====================================
 This is a fork repo for Seamlessdocs.
 
+To release changes to the main app:
+1. Bump the version to `$VERSION` in `./package.json`
+2. Build: `npm run build`
+3. Submit a revision with `arc`
+4. Land revision after it gets approved by 2 FE engineers (large change) or 1 (small change)
+5. Create version tag: `git tag v$VERSION`
+6. Push the new tag: `git push --tags`
+7. In the main app, point the dependency on this project to your tag (probably appears after the `#` in the git URI)
+
 ====================================
 
 FixedDataTable is a React component for building and presenting data in a flexible, powerful way. It supports standard table features, like headers, columns, rows, header groupings, and both fixed-position and scrolling columns.

@@ -1,5 +1,5 @@
 /**
- * FixedDataTable v0.7.0 
+ * FixedDataTable v0.8.0 
  *
  * Copyright (c) 2015, Facebook, Inc.
  * All rights reserved.
@@ -5392,8 +5392,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var style = _props.style;
 	    var className = _props.className;
 	    var children = _props.children;
+	    var columnKey = _props.columnKey;
 
-	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children']);
+	    var rest = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey']);
 
 	    var innerStyle = _extends({
 	      height: height,
@@ -5402,7 +5403,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return React.createElement(
 	      'div',
-	      _extends({}, props, {
+	      _extends({}, rest, {
 	        className: joinClasses(cx('fixedDataTableCellLayout/wrap1'), cx('public/fixedDataTableCell/wrap1'), className),
 	        style: innerStyle }),
 	      React.createElement(
