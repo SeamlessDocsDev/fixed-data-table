@@ -2,22 +2,25 @@ Fixed Data Tables for React
 ====================================
 This is a fork repo for Seamlessdocs.
 
+To install dependencies, run `yarn`. There are no tests.
+
 To release changes to the main app:
 
 1. Bump the version to `$VERSION` in `./package.json`
-2. Build: `npm run build`
+2. Build: `yarn run build`
 3. Submit a revision with `arc`
 4. Land revision after it gets approved by 2 FE engineers (large change) or 1 (small change)
-5. Create version tag: `git tag v$VERSION`
-6. Push the new tag: `git push --tags`
-7. In the main app, point the dependency on this project to your tag (the part after the `#` in the git URI)
+5. Update the required version in the main app
 
 To test changes in the main app:
 
-1. Run `npm run build`
+1. Run `yarn run build`
 2. Commit everything including the build files
 3. Push your branch to GitHub
-4. In the main app, point the dependency on this project to your branch (the part after the `#` in the git URI)
+4. In the main app's `package.json`, point the dependency on this project to your branch:
+    ```
+    "fixed-data-table": "git://github.com/SeamlessDocsDev/seamlessng__3rdparty__facebook__fixed-data-table.git#my-branch"
+    ```
 5. `npm install` in the main app
 
 ====================================
@@ -88,12 +91,6 @@ ReactDOM.render(
   document.getElementById('example')
 );
 ```
-
-Contributions
-------------
-
-Use [GitHub issues](https://github.com/facebook/fixed-data-table/issues) for requests.
-
 
 License
 -------
